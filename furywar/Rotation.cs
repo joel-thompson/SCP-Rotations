@@ -67,6 +67,8 @@ namespace TartEngine.RotationManager
         // to see what the bot is doing in combat logs, enable this.
         // don't leave on as it will spit a LOT of logs over a period of time
         private static bool DEBUG_ROTATION = false;
+
+        public string stance = "berserker";
         
         public override void Initialize()
         {
@@ -103,6 +105,8 @@ namespace TartEngine.RotationManager
             Spellbook.Add(new Spell("Bloodthirst"));
             Spellbook.Add(new Spell("Whirlwind"));
             Spellbook.Add(new Spell("Sunder Armor"));
+            Spellbook.Add(new Spell("Battle Stance"));
+            Spellbook.Add(new Spell("Berserker Stance"));
             
             // Player Buffs;
             PlayerBuffs.Add(new Buff("Battle Shout"));
@@ -127,6 +131,46 @@ namespace TartEngine.RotationManager
             DebugLogging("============================STARTTICK===========================", Color.FromArgb(0, 0, 0));
             DebugLogging(String.Format("Target found :: {0}.   Target health :: {1} out of  {2}", Burning.Target.ID(), Burning.Target.Health(), Burning.Target.MaxHealth()), Color.FromArgb(0, 0, 0));
 
+
+            // if out of combat, charge up, not a ton of rage - swap to battle
+            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
+            {
+                if (Burning.CanCast("Battle Stance", false, true, true, true, true))
+                {
+                    Burning.Cast("Battle Stance");
+                    stance = "battle";
+                }
+            }
+
+            // if out of combat and in battle - try to charge
+            if (!Burning.Player.InCombat() && stance == "battle" && Burning.CanCast("Charge", false, true, true, true, true))
+            {
+                DebugLogging(String.Format("Checking to see if we should cast charge. Target Distance is {0}", Burning.Target.MinRange()), Color.FromArgb(0, 128, 0));
+                if ( Burning.Target.MinRange() >= 8)
+                {
+                    DebugLogging("Target is far enough away. Charging and returning", Color.FromArgb(0, 128, 0));
+                    Burning.Cast("Charge");
+                    if (Burning.CanCast("Berserker Stance", false, true, true, true, true))
+                    {
+                        Burning.Cast("Berserker Stance");
+                        stance = "berserker";
+                    }
+                    return true;
+                } else {
+                    DebugLogging("Target is too close. Not charging. Continuing.", Color.FromArgb(0, 128, 0));
+                }
+            }
+
+
+            // if in combat and battle stance - swap to zerk
+            if (Burning.Player.InCombat() && stance == "battle")
+            {
+                if (Burning.CanCast("Berserker Stance", false, true, true, true, true))
+                {
+                    Burning.Cast("Berserker Stance");
+                    stance = "berserker";
+                }
+            }
 
             DebugLogging("Checking to see if we can execute",  Color.FromArgb(0, 128, 0));
             if(Burning.Target.Health(true) < 20 && Burning.CanCast("Execute", false, true, true, true, true))

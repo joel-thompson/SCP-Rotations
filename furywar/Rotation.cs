@@ -36,7 +36,7 @@ namespace TartEngine.RotationManager
         private static int EXECUTE_MIN_HEALTH = 5;
 
         // minimum rage for casting HS or sunder for rage dump
-        private static int RAGE_DUMP_THRESHOLD = 40;
+        private static int RAGE_DUMP_THRESHOLD = 50;
         private static int RAGE_DUMP_HS_SUNDER_LINE = 70;
 
         // enable using whatever food or water you have in your inventory when OOC to attempt to recover mana and health
@@ -68,12 +68,12 @@ namespace TartEngine.RotationManager
         // don't leave on as it will spit a LOT of logs over a period of time
         private static bool DEBUG_ROTATION = false;
 
-        public string stance = "berserker";
+        public string stance = "battle";
         
         public override void Initialize()
         {
             Expansion = WowExpac.BurningCrusade;
-            FastTick = 350;
+            FastTick = 300;
             SlowTick = 600;
             
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
@@ -107,6 +107,11 @@ namespace TartEngine.RotationManager
             Spellbook.Add(new Spell("Sunder Armor"));
             Spellbook.Add(new Spell("Battle Stance"));
             Spellbook.Add(new Spell("Berserker Stance"));
+            Spellbook.Add(new Spell("Execute"));
+            Spellbook.Add(new Spell("Bloodrage"));
+            Spellbook.Add(new Spell("Blood Fury"));
+            Spellbook.Add(new Spell("Berserker Rage"));
+            Spellbook.Add(new Spell("Charge"));
             
             // Player Buffs;
             PlayerBuffs.Add(new Buff("Battle Shout"));
@@ -129,61 +134,56 @@ namespace TartEngine.RotationManager
         public override bool CombatTick()
         {
             DebugLogging("============================STARTTICK===========================", Color.FromArgb(0, 0, 0));
-            DebugLogging(String.Format("Target found :: {0}.   Target health :: {1} out of  {2}", Burning.Target.ID(), Burning.Target.Health(), Burning.Target.MaxHealth()), Color.FromArgb(0, 0, 0));
+            DebugLogging(String.Format("Target found :: {0}.   Target health :: {1}, stance: {2}", Burning.Target.ID(), Burning.Target.Health(true), stance), Color.FromArgb(0, 0, 0));
 
+
+            DebugLogging("Checking to see if we can execute",  Color.FromArgb(0, 128, 0));
+            if(Burning.Target.Health(true) < 20)
+            {
+                DebugLogging("We can cast execute, checking to see if we should.", Color.FromArgb(0, 128, 0));
+                if (ENABLE_EXECUTE && Burning.Player.Power(true) > 15 && Burning.Target.Health(true) > EXECUTE_MIN_HEALTH)
+                {
+                    DebugLogging("We should cast execute, casting execute and returning.", Color.FromArgb(0, 128, 0));
+                    Burning.Cast("Execute");
+
+                } else {
+                    DebugLogging("We should not execute. Either execute is disabled or we do not have the rage.", Color.FromArgb(0, 128, 0));
+                }
+            } else
+            {
+                DebugLogging("did not execute, target health not under 20", Color.FromArgb(0, 128, 0));
+            }
 
             // if out of combat, charge up, not a ton of rage - swap to battle
             if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
             {
-                if (Burning.CanCast("Battle Stance", false, true, true, true, true))
-                {
-                    Burning.Cast("Battle Stance");
-                    stance = "battle";
-                }
+                Burning.Cast("Battle Stance");
+                stance = "battle";
+                // return true;
+            }
+
+            // if in combat and battle stance - swap to zerk
+            if (Burning.Player.InCombat())
+            {
+                Burning.Cast("Berserker Stance");
+                stance = "berserker";
+                // return true;
             }
 
             // if out of combat and in battle - try to charge
             if (!Burning.Player.InCombat() && stance == "battle" && Burning.CanCast("Charge", false, true, true, true, true))
             {
                 DebugLogging(String.Format("Checking to see if we should cast charge. Target Distance is {0}", Burning.Target.MinRange()), Color.FromArgb(0, 128, 0));
-                if ( Burning.Target.MinRange() >= 8)
+                if ( Burning.Target.MinRange() >= 8 && Burning.Target.MaxRange() <= 25)
                 {
                     DebugLogging("Target is far enough away. Charging and returning", Color.FromArgb(0, 128, 0));
                     Burning.Cast("Charge");
-                    if (Burning.CanCast("Berserker Stance", false, true, true, true, true))
-                    {
-                        Burning.Cast("Berserker Stance");
-                        stance = "berserker";
-                    }
+                    // Burning.Cast("Berserker Stance");
+                    // stance = "berserker";
                     return true;
                 } else {
                     DebugLogging("Target is too close. Not charging. Continuing.", Color.FromArgb(0, 128, 0));
                 }
-            }
-
-
-            // if in combat and battle stance - swap to zerk
-            if (Burning.Player.InCombat() && stance == "battle")
-            {
-                if (Burning.CanCast("Berserker Stance", false, true, true, true, true))
-                {
-                    Burning.Cast("Berserker Stance");
-                    stance = "berserker";
-                }
-            }
-
-            DebugLogging("Checking to see if we can execute",  Color.FromArgb(0, 128, 0));
-            if(Burning.Target.Health(true) < 20 && Burning.CanCast("Execute", false, true, true, true, true))
-            {
-                DebugLogging("We can cast execute, checking to see if we should.", Color.FromArgb(0, 128, 0));
-                if (ENABLE_EXECUTE && Burning.Player.Power(true) > 15 && Burning.Target.Health(true) > EXECUTE_MIN_HEALTH)
-                {
-                    DebugLogging("We should cast execute, casting execute and returning.", Color.FromArgb(0, 128, 0));
-
-                } else {
-                    DebugLogging("We should not execute. Either execute is disabled or we do not have the rage.", Color.FromArgb(0, 128, 0));
-                }
-
             }
 
             DebugLogging("Checking if we can cast battleshout",Color.FromArgb(0, 128, 0));
@@ -199,6 +199,50 @@ namespace TartEngine.RotationManager
                     DebugLogging("Battleshout is up. No reason to cast. Continuing.",Color.FromArgb(0, 128, 0));
                 }
             }
+
+            DebugLogging("Checking if we can cast Bloodthirst",Color.FromArgb(0, 128, 0));
+            if (Burning.CanCast("Bloodthirst", false, true, true, true, true) && Burning.Player.Power(true) >= 30)
+            {
+                DebugLogging("We can and should should cast Bloodthirst. bloodthirsting and returning.", Color.FromArgb(0, 128, 0));
+                Burning.Cast("Bloodthirst");
+                return true;
+            }
+
+
+
+
+
+            DebugLogging("Checking if we can cast Blood Fury",Color.FromArgb(0, 128, 0));
+            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Blood Fury") == 0 && Burning.Target.MinRange() <= 8)
+            {
+                Burning.Cast("Blood Fury");
+                return true;
+            } else 
+            {
+                DebugLogging("Blood Fury is not available. Continuing.",Color.FromArgb(0, 128, 0));
+            }
+
+            DebugLogging("Checking if we can cast bloodrage",Color.FromArgb(0, 128, 0));
+            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Bloodrage") == 0 && stance == "berserker")
+            {
+                Burning.Cast("Bloodrage");
+                return true;
+            } else 
+            {
+                DebugLogging("Bloodrage is not available. Continuing.",Color.FromArgb(0, 128, 0));
+            }
+
+            DebugLogging("Checking if we can cast Berserker Rage",Color.FromArgb(0, 128, 0));
+            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Berserker Rage") == 0 && stance == "berserker" && Burning.Player.InCombat() && Burning.Target.MinRange() <= 8)
+            {
+                Burning.Cast("Berserker Rage");
+                return true;
+            } else 
+            {
+                DebugLogging("Berserker Rage is not available. Continuing.",Color.FromArgb(0, 128, 0));
+            }
+
+
 
             DebugLogging("Checking if we can cast Hamstring",Color.FromArgb(0, 128, 0));
             if (Burning.CanCast("Hamstring", false, true, true, true, true) && Burning.Player.Power(true) >= 10)
@@ -228,26 +272,22 @@ namespace TartEngine.RotationManager
                 }
             }
 
-            DebugLogging("Checking if we can cast Bloodthirst",Color.FromArgb(0, 128, 0));
-            if (Burning.CanCast("Bloodthirst", false, true, true, true, true) && Burning.Player.Power(true) >= 30)
-            {
-                DebugLogging("We can and should should cast Bloodthirst. bloodthirsting and returning.", Color.FromArgb(0, 128, 0));
-                Burning.Cast("Bloodthirst");
-                return true;
-            }
+
 
             DebugLogging("Checking if we can cast Whirlwind",Color.FromArgb(0, 128, 0));
-            if (Burning.CanCast("Whirlwind", false, true, true, true, true) && Burning.Player.Power(true) >= 25)
+            if (Burning.Player.Power(true) >= 25  && Burning.SpellCooldown("Whirlwind") == 0 && Burning.Target.MinRange() <= 8  && Burning.SpellCooldown("Bloodthirst") > 0 && stance == "berserker")
             {
                 DebugLogging("We can and should cast Whirlwind. Whirlwinding and returning.", Color.FromArgb(0, 128, 0));
                 Burning.Cast("Whirlwind");
                 return true;
+            } else {
+                DebugLogging("cannot cast whirlwind",Color.FromArgb(0, 128, 0));
             }
 
             DebugLogging("Checking if we have enough rage to dump.",Color.FromArgb(0, 128, 0));
             if (Burning.Player.Power(true) >= RAGE_DUMP_THRESHOLD)
             {     
-                if (Burning.CanCast("Sunder Armor", false, true, true, true, true) && Burning.Player.Power(true) >= RAGE_DUMP_HS_SUNDER_LINE)
+                if (Burning.CanCast("Sunder Armor", false, true, true, true, true) && Burning.Target.Health(true) >= RAGE_DUMP_HS_SUNDER_LINE)
                 {     
                     DebugLogging("We have excess rage. Sundering and returning.",Color.FromArgb(0, 128, 0));          
                     Burning.Cast("Sunder Armor");
@@ -266,6 +306,14 @@ namespace TartEngine.RotationManager
         
         public override bool OutOfCombatTick()
         {
+            // if out of combat, charge up, not a ton of rage - swap to battle
+            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
+            {
+                Burning.Cast("Battle Stance");
+                stance = "battle";
+                // return true;
+            }
+
             if (!Burning.HasBuff("Food", "Player"))
             {
                 DebugLogging("Checking if we want to eat.", Color.FromArgb(0, 0, 128));

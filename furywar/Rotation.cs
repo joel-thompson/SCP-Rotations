@@ -61,7 +61,7 @@ namespace TartEngine.RotationManager
         // eating/drinking will be prioritized left to right
         // we can't make the list completely comprehensive, as there is a limit to the number of items that you can register with the bot at once.
         // if a food or drink you want is not on thei list, remove an entry and replace it with the one you would like.
-        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail",  "Homemade Cherry Pie", "Snapvine Watermelon", "Red-speckled Mushroom", "Goldenbark Apple", "Mutton Chop", "Dwarven Mild", "Longjaw Mud Snapper", "Haunch of Meat", "Tough Jerky", "Shiny Red Apple", "Darnassian Bleu"};
+        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail",  "Homemade Cherry Pie", "Snapvine Watermelon", "Red-speckled Mushroom", "Goldenbark Apple", "Mutton Chop", "Dwarven Mild", "Longjaw Mud Snapper", "Haunch of Meat", "Tough Jerky", "Shiny Red Apple", "Dried King Bolete"};
 
 
         // to see what the bot is doing in combat logs, enable this.

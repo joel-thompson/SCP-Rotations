@@ -66,7 +66,7 @@ namespace TartEngine.RotationManager
 
         // to see what the bot is doing in combat logs, enable this.
         // don't leave on as it will spit a LOT of logs over a period of time
-        private static bool DEBUG_ROTATION = false;
+        private static bool DEBUG_ROTATION = true;
 
         public string stance = "battle";
         
@@ -155,7 +155,7 @@ namespace TartEngine.RotationManager
             }
 
             // if out of combat, charge up, not a ton of rage - swap to battle
-            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
+            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30)
             {
                 Burning.Cast("Battle Stance");
                 stance = "battle";
@@ -174,34 +174,32 @@ namespace TartEngine.RotationManager
             if (!Burning.Player.InCombat() && stance == "battle" && Burning.CanCast("Charge", false, true, true, true, true))
             {
                 DebugLogging(String.Format("Checking to see if we should cast charge. Target Distance is {0}", Burning.Target.MinRange()), Color.FromArgb(0, 128, 0));
-                if ( Burning.Target.MinRange() >= 8 && Burning.Target.MaxRange() <= 25)
+                if (true) // placeholder due to range not being available
                 {
                     DebugLogging("Target is far enough away. Charging and returning", Color.FromArgb(0, 128, 0));
                     Burning.Cast("Charge");
-                    // Burning.Cast("Berserker Stance");
-                    // stance = "berserker";
                     return true;
                 } else {
                     DebugLogging("Target is too close. Not charging. Continuing.", Color.FromArgb(0, 128, 0));
                 }
             }
 
-            DebugLogging("Checking if we can cast battleshout",Color.FromArgb(0, 128, 0));
-            if (Burning.Player.Power(true) >= 10)
-            {
-                DebugLogging("We have the rage to battleshout, checking to see if we should battleshout",Color.FromArgb(0, 128, 0));
-                if (!Burning.HasBuff("Battle Shout", "Player"))
-                {
-                    DebugLogging("We do not have the battleshout buff, so we are castin battleshout and returning.",Color.FromArgb(0, 128, 0));
-                    Burning.Cast("Battle Shout");
-                    return true;
-                } else {
-                    DebugLogging("Battleshout is up. No reason to cast. Continuing.",Color.FromArgb(0, 128, 0));
-                }
-            }
+            // DebugLogging("Checking if we can cast battleshout",Color.FromArgb(0, 128, 0));
+            // if (Burning.Player.Power(true) >= 10)
+            // {
+            //     DebugLogging("We have the rage to battleshout, checking to see if we should battleshout",Color.FromArgb(0, 128, 0));
+            //     if (!Burning.HasBuff("Battle Shout", "Player"))
+            //     {
+            //         DebugLogging("We do not have the battleshout buff, so we are castin battleshout and returning.",Color.FromArgb(0, 128, 0));
+            //         Burning.Cast("Battle Shout");
+            //         return true;
+            //     } else {
+            //         DebugLogging("Battleshout is up. No reason to cast. Continuing.",Color.FromArgb(0, 128, 0));
+            //     }
+            // }
 
             DebugLogging("Checking if we can cast Bloodthirst",Color.FromArgb(0, 128, 0));
-            if (Burning.CanCast("Bloodthirst", false, true, true, true, true) && Burning.Player.Power(true) >= 30)
+            if (Burning.Player.Power(true) >= 30)
             {
                 DebugLogging("We can and should should cast Bloodthirst. bloodthirsting and returning.", Color.FromArgb(0, 128, 0));
                 Burning.Cast("Bloodthirst");
@@ -213,7 +211,7 @@ namespace TartEngine.RotationManager
 
 
             DebugLogging("Checking if we can cast Blood Fury",Color.FromArgb(0, 128, 0));
-            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Blood Fury") == 0 && Burning.Target.MinRange() <= 8)
+            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Blood Fury") == 0 && Burning.Player.InCombat())
             {
                 Burning.Cast("Blood Fury");
                 return true;
@@ -233,7 +231,7 @@ namespace TartEngine.RotationManager
             }
 
             DebugLogging("Checking if we can cast Berserker Rage",Color.FromArgb(0, 128, 0));
-            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Berserker Rage") == 0 && stance == "berserker" && Burning.Player.InCombat() && Burning.Target.MinRange() <= 8)
+            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Berserker Rage") == 0 && stance == "berserker" && Burning.Player.InCombat())
             {
                 Burning.Cast("Berserker Rage");
                 return true;
@@ -275,7 +273,7 @@ namespace TartEngine.RotationManager
 
 
             DebugLogging("Checking if we can cast Whirlwind",Color.FromArgb(0, 128, 0));
-            if (Burning.Player.Power(true) >= 25  && Burning.SpellCooldown("Whirlwind") == 0 && Burning.Target.MinRange() <= 8  && Burning.SpellCooldown("Bloodthirst") > 0 && stance == "berserker")
+            if (Burning.Player.Power(true) >= 25  && Burning.SpellCooldown("Whirlwind") == 0 && Burning.Player.InCombat() && Burning.SpellCooldown("Bloodthirst") > 0 && stance == "berserker")
             {
                 DebugLogging("We can and should cast Whirlwind. Whirlwinding and returning.", Color.FromArgb(0, 128, 0));
                 Burning.Cast("Whirlwind");
@@ -307,7 +305,7 @@ namespace TartEngine.RotationManager
         public override bool OutOfCombatTick()
         {
             // if out of combat, charge up, not a ton of rage - swap to battle
-            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
+            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30)
             {
                 Burning.Cast("Battle Stance");
                 stance = "battle";

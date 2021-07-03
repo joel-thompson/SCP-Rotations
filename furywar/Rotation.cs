@@ -42,8 +42,11 @@ namespace TartEngine.RotationManager
         // enable using whatever food or water you have in your inventory when OOC to attempt to recover mana and health
         private static bool ENABLE_EATING = true;
 
+        private static bool ENABLE_FIRST_AID = true;
+        private static string BANDAGE_NAME = "Netherweave Bandage";
+
         // the target health and mana, in percent, that we'd like to achieve in OOC before continuing
-        private static int OOC_HEALTH_TARGET = 80;
+        private static int OOC_HEALTH_TARGET = 90;
 
         
         // the number, in percent, below our target OOC where we want to utilize foor or water to help regen faster
@@ -54,14 +57,14 @@ namespace TartEngine.RotationManager
         // your OOC_MANA_TARGET is 80, and OOC_FOOD_TARGET_DIFF is 25, and you end a fight at 56%, the bot will wait for natural regen to gain 24% of mana before continuing
         // your OOC_MANA_TARGET is 80, and OOC_FOOD_TARGET_DIFF is 25, and you end a fight at 54%, the bot will drink water to regain 26% of mana before continuing
         // default setting is 25
-        private static int OOC_FOOD_TARGET_DIFF = 20;
+        private static int OOC_FOOD_TARGET_DIFF = 25;
 
 
         // somewhat comprehensive list of regen items. useful if you want to enable OOC to eat/drink
         // eating/drinking will be prioritized left to right
         // we can't make the list completely comprehensive, as there is a limit to the number of items that you can register with the bot at once.
         // if a food or drink you want is not on thei list, remove an entry and replace it with the one you would like.
-        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail",  "Homemade Cherry Pie", "Snapvine Watermelon", "Red-speckled Mushroom", "Goldenbark Apple", "Mutton Chop", "Dwarven Mild", "Longjaw Mud Snapper", "Haunch of Meat", "Tough Jerky", "Shiny Red Apple", "Dried King Bolete"};
+        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail", "Dried King Bolete"};
 
 
         // to see what the bot is doing in combat logs, enable this.
@@ -116,6 +119,13 @@ namespace TartEngine.RotationManager
             // Player Buffs;
             PlayerBuffs.Add(new Buff("Battle Shout"));
             PlayerBuffs.Add(new Buff("Food"));
+            PlayerBuffs.Add(new Buff("First Aid"));
+
+            // player debuffs
+            PlayerDebuffs.Add(new Debuff("Recently Bandaged"));
+
+            // bandage
+            Inventory.Add(new Item(BANDAGE_NAME));
 
             // food item list
             foreach(string food in FOOD_TYPES)
@@ -315,7 +325,27 @@ namespace TartEngine.RotationManager
                 // return true;
             }
 
-            if (!Burning.HasBuff("Food", "Player"))
+            // no recently bandaged
+            // use bandage
+            DebugLogging("Checking if we want to first aid.", Color.FromArgb(0, 0, 128));
+            if (ENABLE_FIRST_AID && !Burning.Player.InCombat() && Burning.DebuffRemaining("Recently Bandaged", "Player") == 0 && Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF))
+            {
+                DebugLogging("-- Using first aid", Color.FromArgb(0, 0, 128));
+                Burning.Use(BANDAGE_NAME);
+            }
+
+            // // just debugging - leaving in case it breaks again later
+            if (Burning.DebuffRemaining("Recently Bandaged", "Player") == 0)
+            {
+                DebugLogging("++ is NOT recently bandaged ++", Color.FromArgb(0, 0, 128));
+            } else
+            {
+                DebugLogging("++ is recently bandaged ++", Color.FromArgb(0, 0, 128));
+            }
+
+            // recently bandaged and no bangage currently
+            // eat
+            if (!Burning.HasBuff("Food", "Player") && (!ENABLE_FIRST_AID || Burning.DebuffRemaining("Recently Bandaged", "Player") > 0) && !Burning.HasBuff("First Aid", "Player")) // 
             {
                 DebugLogging("Checking if we want to eat.", Color.FromArgb(0, 0, 128));
                 if ( ENABLE_EATING && !Burning.HasBuff("Food", "Player")  &&  Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF) )
@@ -357,7 +387,11 @@ namespace TartEngine.RotationManager
         public override bool TickCompleted()
         {
             if ((OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF) > Burning.Player.Health(true)) return false;
-            if (((OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF) < Burning.Player.Health(true)) && (Burning.Player.Health(true) < OOC_HEALTH_TARGET)) return !Burning.HasBuff("Food", "Player");
+            if (Burning.Player.Health(true) < 100 && Burning.HasBuff("First Aid", "Player"))
+            {
+                return false;
+            }
+            if (((OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF) < Burning.Player.Health(true)) && (Burning.Player.Health(true) < OOC_HEALTH_TARGET)) return !Burning.HasBuff("Food", "Player") && !Burning.HasBuff("First Aid", "Player");
             return true;
         }
     }

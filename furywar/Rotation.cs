@@ -328,7 +328,7 @@ namespace TartEngine.RotationManager
             // no recently bandaged
             // use bandage
             DebugLogging("Checking if we want to first aid.", Color.FromArgb(0, 0, 128));
-            if (ENABLE_FIRST_AID && !Burning.Player.InCombat() && Burning.DebuffRemaining("Recently Bandaged", "Player") == 0 && Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF))
+            if (ENABLE_FIRST_AID && Burning.ItemCount(BANDAGE_NAME) > 0 && !Burning.Player.InCombat() && Burning.DebuffRemaining("Recently Bandaged", "Player") == 0 && Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF))
             {
                 DebugLogging("-- Using first aid", Color.FromArgb(0, 0, 128));
                 Burning.Use(BANDAGE_NAME);

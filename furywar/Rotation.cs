@@ -36,7 +36,7 @@ namespace TartEngine.RotationManager
         private static int EXECUTE_MIN_HEALTH = 5;
 
         // minimum rage for casting HS or sunder for rage dump
-        private static int RAGE_DUMP_THRESHOLD = 50;
+        private static int RAGE_DUMP_THRESHOLD = 40;
         private static int RAGE_DUMP_HS_SUNDER_LINE = 70;
 
         // enable using whatever food or water you have in your inventory when OOC to attempt to recover mana and health
@@ -66,7 +66,7 @@ namespace TartEngine.RotationManager
 
         // to see what the bot is doing in combat logs, enable this.
         // don't leave on as it will spit a LOT of logs over a period of time
-        private static bool DEBUG_ROTATION = true;
+        private static bool DEBUG_ROTATION = false;
 
         public string stance = "battle";
         
@@ -134,7 +134,7 @@ namespace TartEngine.RotationManager
         public override bool CombatTick()
         {
             DebugLogging("============================STARTTICK===========================", Color.FromArgb(0, 0, 0));
-            DebugLogging(String.Format("Target found :: {0}.   Target health :: {1}, stance: {2}", Burning.Target.ID(), Burning.Target.Health(true), stance), Color.FromArgb(0, 0, 0));
+            DebugLogging(String.Format("Target found :: {0}.   Target health :: {1}, rage: {2}, stance: {3}", Burning.Target.ID(), Burning.Target.Health(true), Burning.Player.Power(true), stance), Color.FromArgb(0, 0, 0));
 
 
             DebugLogging("Checking to see if we can execute",  Color.FromArgb(0, 128, 0));
@@ -184,26 +184,29 @@ namespace TartEngine.RotationManager
                 }
             }
 
-            // DebugLogging("Checking if we can cast battleshout",Color.FromArgb(0, 128, 0));
-            // if (Burning.Player.Power(true) >= 10)
-            // {
-            //     DebugLogging("We have the rage to battleshout, checking to see if we should battleshout",Color.FromArgb(0, 128, 0));
-            //     if (!Burning.HasBuff("Battle Shout", "Player"))
-            //     {
-            //         DebugLogging("We do not have the battleshout buff, so we are castin battleshout and returning.",Color.FromArgb(0, 128, 0));
-            //         Burning.Cast("Battle Shout");
-            //         return true;
-            //     } else {
-            //         DebugLogging("Battleshout is up. No reason to cast. Continuing.",Color.FromArgb(0, 128, 0));
-            //     }
-            // }
+            DebugLogging("Checking if we can cast battleshout",Color.FromArgb(0, 128, 0));
+            if (Burning.Player.Power(true) >= 10)
+            {
+                DebugLogging("We have the rage to battleshout, checking to see if we should battleshout",Color.FromArgb(0, 128, 0));
+                if (!Burning.HasBuff("Battle Shout", "Player"))
+                {
+                    DebugLogging("We do not have the battleshout buff, so we are castin battleshout and returning.",Color.FromArgb(0, 128, 0));
+                    Burning.Cast("Battle Shout");
+                    return true;
+                } else {
+                    DebugLogging("Battleshout is up. No reason to cast. Continuing.",Color.FromArgb(0, 128, 0));
+                }
+            }
 
             DebugLogging("Checking if we can cast Bloodthirst",Color.FromArgb(0, 128, 0));
-            if (Burning.Player.Power(true) >= 30)
+            if (Burning.Player.Power(true) >= 30  && Burning.SpellCooldown("Bloodthirst") == 0)
             {
                 DebugLogging("We can and should should cast Bloodthirst. bloodthirsting and returning.", Color.FromArgb(0, 128, 0));
                 Burning.Cast("Bloodthirst");
                 return true;
+            } else 
+            {
+                DebugLogging("-- cannot cast bloodthirst", Color.FromArgb(0, 128, 0));
             }
 
 
@@ -231,7 +234,7 @@ namespace TartEngine.RotationManager
             }
 
             DebugLogging("Checking if we can cast Berserker Rage",Color.FromArgb(0, 128, 0));
-            if (Burning.Target.Health(true) > 60 && Burning.Player.Health(true) >= 20 && Burning.SpellCooldown("Berserker Rage") == 0 && stance == "berserker" && Burning.Player.InCombat())
+            if (Burning.Target.Health(true) > 60 && Burning.SpellCooldown("Berserker Rage") == 0 && Burning.Player.InCombat() && stance == "berserker")
             {
                 Burning.Cast("Berserker Rage");
                 return true;
@@ -285,12 +288,12 @@ namespace TartEngine.RotationManager
             DebugLogging("Checking if we have enough rage to dump.",Color.FromArgb(0, 128, 0));
             if (Burning.Player.Power(true) >= RAGE_DUMP_THRESHOLD)
             {     
-                if (Burning.CanCast("Sunder Armor", false, true, true, true, true) && Burning.Target.Health(true) >= RAGE_DUMP_HS_SUNDER_LINE)
+                if (Burning.SpellIsUsable("Sunder Armor") && Burning.Target.Health(true) >= RAGE_DUMP_HS_SUNDER_LINE)
                 {     
                     DebugLogging("We have excess rage. Sundering and returning.",Color.FromArgb(0, 128, 0));          
                     Burning.Cast("Sunder Armor");
                     return true;
-                } else if (Burning.CanCast("Heroic Strike", false, true, true, true, true))
+                } else if (Burning.SpellIsUsable("Heroic Strike"))
                 {     
                     DebugLogging("We have excess rage. HSing and returning.",Color.FromArgb(0, 128, 0));          
                     Burning.Cast("Heroic Strike");

@@ -155,7 +155,7 @@ namespace TartEngine.RotationManager
             }
 
             // if out of combat, charge up, not a ton of rage - swap to battle
-            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30)
+            if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30 && Burning.SpellCooldown("Charge") == 0)
             {
                 Burning.Cast("Battle Stance");
                 stance = "battle";

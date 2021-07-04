@@ -95,7 +95,6 @@ namespace TartEngine.RotationManager
             Logger.Write(String.Format("ENABLE_EATING = {0}", ENABLE_EATING), Color.FromArgb(0, 128, 255));
             Logger.Write(String.Format("OOC_HEALTH_TARGET = {0}", OOC_HEALTH_TARGET), Color.FromArgb(0, 128, 255));
             Logger.Write(String.Format("OOC_FOOD_TARGET_DIFF = {0}", OOC_FOOD_TARGET_DIFF), Color.FromArgb(0, 128, 255));
-            Logger.Write(String.Format("FOOD_TYPES = {0}", string.Join(",",FOOD_TYPES)), Color.FromArgb(0, 128, 255));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
@@ -128,13 +127,6 @@ namespace TartEngine.RotationManager
             // bandage
             Inventory.Add(new Item(BANDAGE_NAME));
             Inventory.Add(new Item(FOOD_NAME));
-            
-            // food item list
-            // foreach(string food in FOOD_TYPES)
-            // {
-            //     DebugLogging(String.Format("Configuring the following food type :: {0}", food), Color.FromArgb(0, 0, 0));
-            //     Inventory.Add(new Item(food));
-            // }
 
             TargetDebuffs.Add(new Debuff("Rend"));
             

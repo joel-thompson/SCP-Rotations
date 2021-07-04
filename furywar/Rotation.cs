@@ -43,7 +43,7 @@ namespace TartEngine.RotationManager
         private static bool ENABLE_EATING = true;
 
         private static bool ENABLE_FIRST_AID = true;
-        private static string BANDAGE_NAME = "Netherweave Bandage";
+        private static string BANDAGE_NAME = "Runecloth Bandage";
 
         // the target health and mana, in percent, that we'd like to achieve in OOC before continuing
         private static int OOC_HEALTH_TARGET = 90;
@@ -64,12 +64,12 @@ namespace TartEngine.RotationManager
         // eating/drinking will be prioritized left to right
         // we can't make the list completely comprehensive, as there is a limit to the number of items that you can register with the bot at once.
         // if a food or drink you want is not on thei list, remove an entry and replace it with the one you would like.
-        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail", "Dried King Bolete"};
+        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Mag'har Grainbread", "Dried King Bolete"};
 
 
         // to see what the bot is doing in combat logs, enable this.
         // don't leave on as it will spit a LOT of logs over a period of time
-        private static bool DEBUG_ROTATION = false;
+        private static bool DEBUG_ROTATION = true;
 
         public string stance = "battle";
         
@@ -322,13 +322,13 @@ namespace TartEngine.RotationManager
             {
                 Burning.Cast("Battle Stance");
                 stance = "battle";
-                // return true;
+                return true;
             }
 
             // no recently bandaged
             // use bandage
             DebugLogging("Checking if we want to first aid.", Color.FromArgb(0, 0, 128));
-            if (ENABLE_FIRST_AID && Burning.ItemCount(BANDAGE_NAME) > 0 && !Burning.Player.InCombat() && Burning.DebuffRemaining("Recently Bandaged", "Player") == 0 && Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF))
+            if (ENABLE_FIRST_AID && !Burning.Player.InCombat() && Burning.DebuffRemaining("Recently Bandaged", "Player") == 0 && Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF))
             {
                 DebugLogging("-- Using first aid", Color.FromArgb(0, 0, 128));
                 Burning.Use(BANDAGE_NAME);

@@ -44,9 +44,10 @@ namespace TartEngine.RotationManager
 
         private static bool ENABLE_FIRST_AID = true;
         private static string BANDAGE_NAME = "Netherweave Bandage";
+        private static string FOOD_NAME = "Smoked Talbuk Venison";
 
         // the target health and mana, in percent, that we'd like to achieve in OOC before continuing
-        private static int OOC_HEALTH_TARGET = 90;
+        private static int OOC_HEALTH_TARGET = 80;
 
         
         // the number, in percent, below our target OOC where we want to utilize foor or water to help regen faster
@@ -57,14 +58,14 @@ namespace TartEngine.RotationManager
         // your OOC_MANA_TARGET is 80, and OOC_FOOD_TARGET_DIFF is 25, and you end a fight at 56%, the bot will wait for natural regen to gain 24% of mana before continuing
         // your OOC_MANA_TARGET is 80, and OOC_FOOD_TARGET_DIFF is 25, and you end a fight at 54%, the bot will drink water to regain 26% of mana before continuing
         // default setting is 25
-        private static int OOC_FOOD_TARGET_DIFF = 25;
+        private static int OOC_FOOD_TARGET_DIFF = 20;
 
 
         // somewhat comprehensive list of regen items. useful if you want to enable OOC to eat/drink
         // eating/drinking will be prioritized left to right
         // we can't make the list completely comprehensive, as there is a limit to the number of items that you can register with the bot at once.
         // if a food or drink you want is not on thei list, remove an entry and replace it with the one you would like.
-        private static List<string> FOOD_TYPES = new List<string>{ "Clefthoof Ribs", "Sporeggar Mushroom", "Bladespire Bagel", "Telaari Grapes", "Mag'har Mild Cheese", "Zangar Trout", "Smoked Talbuk Venison", "Sunspring Carp", "Zangar Caps", "Mag'har Grainbread", "Garadar Sharp", "Marsh Lichen", "Alterac Swiss", "Roasted Quail", "Dried King Bolete"};
+        // private static List<string> FOOD_TYPES = new List<string>{"Smoked Talbuk Venison"};
 
 
         // to see what the bot is doing in combat logs, enable this.
@@ -94,7 +95,6 @@ namespace TartEngine.RotationManager
             Logger.Write(String.Format("ENABLE_EATING = {0}", ENABLE_EATING), Color.FromArgb(0, 128, 255));
             Logger.Write(String.Format("OOC_HEALTH_TARGET = {0}", OOC_HEALTH_TARGET), Color.FromArgb(0, 128, 255));
             Logger.Write(String.Format("OOC_FOOD_TARGET_DIFF = {0}", OOC_FOOD_TARGET_DIFF), Color.FromArgb(0, 128, 255));
-            Logger.Write(String.Format("FOOD_TYPES = {0}", string.Join(",",FOOD_TYPES)), Color.FromArgb(0, 128, 255));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
             Logger.Write("=============================================================================================================================================================================================================================",Color.FromArgb(255, 128, 0));
@@ -126,13 +126,7 @@ namespace TartEngine.RotationManager
 
             // bandage
             Inventory.Add(new Item(BANDAGE_NAME));
-
-            // food item list
-            foreach(string food in FOOD_TYPES)
-            {
-                DebugLogging(String.Format("Configuring the following food type :: {0}", food), Color.FromArgb(0, 0, 0));
-                Inventory.Add(new Item(food));
-            }
+            Inventory.Add(new Item(FOOD_NAME));
 
             TargetDebuffs.Add(new Debuff("Rend"));
             
@@ -317,6 +311,7 @@ namespace TartEngine.RotationManager
         
         public override bool OutOfCombatTick()
         {
+            Logger.Write("---- out of combat ----", Color.FromArgb(0, 0, 128));
             // if out of combat, charge up, not a ton of rage - swap to battle
             if (!Burning.Player.InCombat() && Burning.Player.Power(true) <= 30)
             {
@@ -332,6 +327,7 @@ namespace TartEngine.RotationManager
             {
                 DebugLogging("-- Using first aid", Color.FromArgb(0, 0, 128));
                 Burning.Use(BANDAGE_NAME);
+                // return true;
             }
 
             // // just debugging - leaving in case it breaks again later
@@ -350,14 +346,19 @@ namespace TartEngine.RotationManager
                 DebugLogging("Checking if we want to eat.", Color.FromArgb(0, 0, 128));
                 if ( ENABLE_EATING && !Burning.HasBuff("Food", "Player")  &&  Burning.Player.Health(true) < (OOC_HEALTH_TARGET - OOC_FOOD_TARGET_DIFF) )
                 {
-                    DebugLogging("We want to eat. Checking if we have food available.", Color.FromArgb(0, 0, 128));
-                    string foundFood = doWeHaveItem(FOOD_TYPES);
-                    if (!String.IsNullOrEmpty(foundFood))
-                    {
-                        DebugLogging(String.Format("Food Found {0}. Eating {0}", foundFood), Color.FromArgb(0, 0, 128));
-                        Burning.Use(foundFood);
-                        return true;
-                    }
+                    // DebugLogging("We want to eat. Checking if we have food available.", Color.FromArgb(0, 0, 128));
+                    // if (Burning.ItemCount(FOOD_NAME) > 0)
+                    // {
+                    Burning.Use(FOOD_NAME);
+                    // return true;
+                    // }
+                    // string foundFood = doWeHaveItem(FOOD_TYPES);
+                    // if (!String.IsNullOrEmpty(foundFood))
+                    // {
+                    //     DebugLogging(String.Format("Food Found {0}. Eating {0}", foundFood), Color.FromArgb(0, 0, 128));
+                    //     Burning.Use(foundFood);
+                    //     return true;
+                    // }
                 }
             }
 
